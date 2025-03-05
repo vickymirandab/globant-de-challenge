@@ -61,8 +61,7 @@ async def upload_csv(table_name: str, file: UploadFile = File(...), db=Depends(g
         df = pd.read_csv(io.StringIO(contents.decode("utf-8")), names=file_headers[table_name], header=None)
 
         for column in df.columns:
-            print(df[column].dtype)
-            if df[column].dtype == 'float64':  # Check if the column type is float (nullable integers will be float in pandas)
+            if df[column].dtype == 'float64':
                 df[column] = df[column].where(df[column].notnull(), -1)
         
         # Insert the data in batches of size 1000 as required
