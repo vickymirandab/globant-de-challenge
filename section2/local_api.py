@@ -98,6 +98,7 @@ async def get_quarterly_hires_2021(db: Session = Depends(get_db)):
             JOIN jobs AS j ON e.job_id = j.id
             WHERE strftime('%Y', e.datetime) = '2021'
             GROUP BY 1, 2, 3
+            ORDER BY d.department, j.job
     """)
 
     result = db.execute(sql).fetchall()

@@ -16,3 +16,29 @@ You need to publish your code in GitHub. It will be taken into account if freque
 - You decide the origin where the CSV files are located.
 - You decide the destination database type, but it must be a SQL database.
 - The CSV file is comma separated.
+
+## Section 2: SQL
+
+You need to explore the data that was inserted in the previous section. The stakeholders ask for some specific metrics they need. You should create an end-point for each requirement.
+
+Requirements
+
+- Number of employees hired for each job and department in 2021 divided by quarter. The table must be ordered alphabetically by department and job.
+
+**Output example**
+
+| Department     | Job             | Q1 | Q2 | Q3 | Q4 |
+|----------------|-----------------|----|----|----|----|
+| Staff          | Recruiter       | 3  | 0  | 7  | 11 |
+| Staff          | Manager         | 2  | 1  | 0  | 2  |
+| Supply Chain   | Manager         | 0  | 1  | 3  | 0  |
+
+
+- List of ids, name and number of employees hired of each department that hired more employees than the mean of employees hired in 2021 for all the departments, ordered by the number of employees hired (descending).
+
+**Output example**
+
+| id | department   | hired |
+|----|--------------|-------|
+| 7  | Staff        | 45    |
+| 9  | Supply Chain | 12    |
