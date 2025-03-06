@@ -37,11 +37,10 @@ async def load_csv_from_gcs():
 
     bucket = gcs_client.get_bucket(GCS_BUCKET_NAME)
     blobs = bucket.list_blobs()
-    logging.info('inside')
+
     try:
         # Get CSV files in GCS
         for blob in blobs:
-            logging.info(f"blob: {blob.name}")
             if blob.name.endswith(".csv"):
                 file_name = blob.name
                 table_name = file_name.replace(".csv", "")  # Remove .csv from filename to get table name
@@ -52,15 +51,15 @@ async def load_csv_from_gcs():
                     source_format=bigquery.SourceFormat.CSV,
                     skip_leading_rows=0,
                     schema=SCHEMAS[table_name],
-                    write_disposition="WRITE_TRUNCATE"  # Truncate the table if it already exists
+                    write_disposition="WRITE_TRUNCATE"
                 )
 
                 # Load the CSV file into BigQuery
                 uri = f"gs://{GCS_BUCKET_NAME}/{file_name}"
                 job = bq_client.load_table_from_uri(uri, table_id, job_config=job_config)
-                job.result()  # Wait for the job to finish
+                job.result()
 
-                print(f"Loaded {file_name} into {table_name} in BigQuery.")
+                logging.info(f"Loaded {file_name} into {table_name} in BigQuery.")
 
         return {"message": "All CSV files loaded into BigQuery."}
     except Exception as e:
@@ -142,7 +141,6 @@ async def get_departments_above_avg_2021():
         print(f"Authentication error: {auth_error}")
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 if __name__ == "__main__":
     import uvicorn
