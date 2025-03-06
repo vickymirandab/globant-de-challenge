@@ -1,7 +1,8 @@
+import logging
 from fastapi import FastAPI, HTTPException
 from google.cloud import storage, bigquery
 from google.auth import exceptions
-import logging
+
 
 app = FastAPI()
 bq_client = bigquery.Client()
@@ -33,7 +34,7 @@ SCHEMAS = {
 
 @app.post("/load_csv")
 async def load_csv_from_gcs():
-    """Trigger BigQuery to load a CSV from GCS"""
+    """ Load CSV files stored in GCS into BigQuery tables """
 
     bucket = gcs_client.get_bucket(GCS_BUCKET_NAME)
     blobs = bucket.list_blobs()
@@ -43,7 +44,7 @@ async def load_csv_from_gcs():
         for blob in blobs:
             if blob.name.endswith(".csv"):
                 file_name = blob.name
-                table_name = file_name.replace(".csv", "")  # Remove .csv from filename to get table name
+                table_name = file_name.replace(".csv", "")
                 table_id = f"{bq_client.project}.{DATASET_ID}.{table_name}"
 
                 # Set job configuration
@@ -68,21 +69,23 @@ async def load_csv_from_gcs():
 
 ##### SECTION 2 #####
 
-# Endpoint to get the number of employees hired for each job and department by quarter in 2021
+
 @app.get("/metrics/quarterly_hires_2021")
 async def get_quarterly_hires_2021():
+    """ Endpoint to get the number of employees hired for each job and department by quarter in 2021 """
+
     quarterly_hires_query = """
             SELECT
-            d.department,
-            j.job,
-            EXTRACT(QUARTER FROM CAST(e.datetime AS TIMESTAMP)) AS quarter,
-            COUNT(*) AS total_employees
-        FROM globant_challenge.hired_employees AS e
-        JOIN globant_challenge.departments AS d ON e.department_id = d.id
-        JOIN globant_challenge.jobs AS j ON e.job_id = j.id
-        WHERE EXTRACT(YEAR FROM CAST(e.datetime AS TIMESTAMP)) = 2021
-        GROUP BY d.department, j.job, quarter
-        ORDER BY d.department, j.job;
+                d.department,
+                j.job,
+                EXTRACT(QUARTER FROM CAST(e.datetime AS TIMESTAMP)) AS quarter,
+                COUNT(*) AS num_hired
+            FROM globant_challenge.hired_employees AS e
+            JOIN globant_challenge.departments AS d ON e.department_id = d.id
+            JOIN globant_challenge.jobs AS j ON e.job_id = j.id
+            WHERE EXTRACT(YEAR FROM CAST(e.datetime AS TIMESTAMP)) = 2021
+            GROUP BY d.department, j.job, quarter
+            ORDER BY d.department, j.job;
     """
 
     try:
@@ -93,34 +96,45 @@ async def get_quarterly_hires_2021():
             {
                 "department": row.department,
                 "job": row.job,
-                "quarter":
-                row.quarter,
-                "num_hired": row.num_hired}
+                "quarter": row.quarter,
+                "num_hired": row.num_hired
+            }
             for row in results
         ]
     except exceptions.GoogleAuthError as auth_error:
-        raise HTTPException(status_code=500, detail=f"Authentication error: {auth_error}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Authentication error: {auth_error}"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
-# Endpoint to get departments that hired more than the average number of employees in 2021
+
 @app.get("/metrics/departments_above_avg_2021")
 async def get_departments_above_avg_2021():
+    """ Endpoint to get departments that hired more than the average number of employees in 2021 """
+
     departments_above_abg_query = """
         WITH department_hires AS (
             -- Get the number of hires per department
-            SELECT department_id, COUNT(*) AS hired_count
+            SELECT
+                department_id,
+                COUNT(*) AS hired_count
             FROM hired_employees
             WHERE datetime BETWEEN '2021-01-01' AND '2021-12-31'
             GROUP BY department_id
         ),
         avg_hires AS (
             -- Get average number of hires across all departments
-            SELECT AVG(hired_count) AS avg_hires_all_departments
+            SELECT
+                AVG(hired_count) AS avg_hires_all_departments
             FROM department_hires
         )
         -- Get departments that hired more than the average
-        SELECT d.id, d.department, dh.hired_count AS hired
+        SELECT
+            d.id,
+            d.department,
+            dh.hired_count AS hired
         FROM department_hires dh
         JOIN departments d ON dh.department_id = d.id
         CROSS JOIN avg_hires
@@ -133,12 +147,19 @@ async def get_departments_above_avg_2021():
         results = query_job.result()
 
         return [
-            {"department_id": row["id"], "department": row["department"], "hired": row["hired"]}
+            {
+                "department_id": row["id"],
+                "department": row["department"],
+                "hired": row["hired"]
+            }
             for row in results
         ]
 
     except exceptions.GoogleAuthError as auth_error:
-        print(f"Authentication error: {auth_error}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Authentication error: {auth_error}"
+        )
     except Exception as e:
         print(f"An error occurred: {e}")
 
