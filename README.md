@@ -42,3 +42,31 @@ Requirements
 |----|--------------|-------|
 | 7  | Staff        | 45    |
 | 9  | Supply Chain | 12    |
+
+## Test local API
+
+Go to folder where code is located and run
+
+```
+python main.py
+```
+
+Then you can go to http://localhost:8000/docs#/ (FastAPI Swagger UI) and easily call the endpoints. For upload_csv endpoint you would need to enter the table name (departments, jobs or hired_employees) and load the corresponding CSV.
+
+## Deployment in GCP
+
+To deploy the API run:
+
+```
+gcloud run deploy <service-name> --source <code-path>   --region <gcp-region>   --port 8080
+```
+
+To test the endpoints:
+
+```
+curl -X 'POST' 'https://<cloud-run-service-name>.<gcp-region>.run.app/load_csv'
+
+curl -X 'GET' 'https://<cloud-run-service-name>.<gcp-region>.run.app/metrics/quarterly_hires_2021'
+
+curl -X 'GET' 'https://<cloud-run-service-name>.<gcp-region>.run.app/metrics/departments_above_avg_2021'
+```

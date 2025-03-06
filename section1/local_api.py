@@ -75,6 +75,6 @@ async def upload_csv(table_name: str, file: UploadFile = File(...), db=Depends(g
     
     raise HTTPException(status_code=400, detail="Invalid table name")
 
- if __name__ == "__main__":
+if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
